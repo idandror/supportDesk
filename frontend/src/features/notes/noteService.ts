@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_URL = '/api/tickets/';
 
 //Get ticket notes
-const getNotes = async (ticketId, token) => {
+const getNotes = async (ticketId: string, token: string) => {
   const config = {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -15,7 +15,11 @@ const getNotes = async (ticketId, token) => {
 };
 
 //Create ticket note
-const createNote = async (noteText, ticketId, token) => {
+const createNote = async (
+  noteText: string,
+  ticketId: string,
+  token: string
+) => {
   const config = {
     headers: {
       Authorization: `Bearer ${token}`,

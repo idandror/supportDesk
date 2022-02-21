@@ -1,0 +1,56 @@
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import { toast } from 'react-toastify';
+import { reset, getTickets, Ticket } from '../features/tickets/ticketSlice';
+import Spinner from '../components/Spinner';
+import { GoBackButton } from '../components/GoBackButton';
+import TicketItem from '../components/TicketItem';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
+
+function Tickets() {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { tickets, isLoading, isSuccess, isError, message } = useAppSelector(
+    (state) => state.ticket
+  );
+  const { user } = useAppSelector((state) => state.auth);
+  //TWO use effects in order to call the reset dispatch only once!
+  useEffect(() => {
+    return () => {
+      if (isSuccess) {
+        dispatch(reset());
+      }
+    };
+  }, [dispatch, isSuccess]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    } else {
+      if (isError) {
+        toast.error(message);
+      }
+      dispatch(getTickets(''));
+    }
+  }, [dispatch, user, navigate, isError, message]);
+  return (
+    <div>
+      {isLoading && <Spinner />}
+      <GoBackButton url="/" />
+      <h1>Tickets</h1>
+      <div className="tickets">
+        <div className="ticket-headings">
+          <div>Date</div>
+          <div>Product</div>
+          <div>Status</div>
+          <div></div>
+        </div>
+        {tickets?.map((ticket: Ticket) => (
+          <TicketItem key={ticket._id} ticket={ticket} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default Tickets;

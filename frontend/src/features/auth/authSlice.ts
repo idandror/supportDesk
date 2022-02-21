@@ -3,8 +3,28 @@ import authService from './authService';
 
 //Get user from localstorage
 
-const user = JSON.parse(localStorage.getItem('user'));
-const initialState = {
+export interface authState {
+  user: User | null;
+  isError: boolean;
+  isSuccess: boolean;
+  isLoading: boolean;
+  message: string | null;
+}
+
+export interface User {
+  name?: string | null;
+  email: string | null;
+  password: string | null;
+  token?: string;
+}
+let user;
+if (localStorage.getItem('user')) {
+  user = JSON.parse(localStorage.getItem('user') || '');
+} else {
+  user = null;
+}
+
+const initialState: authState = {
   user: user ? user : null,
   isError: false,
   isSuccess: false,
@@ -13,35 +33,28 @@ const initialState = {
 };
 
 //Register new user
-export const register = createAsyncThunk(
+export const register = createAsyncThunk<User, User, { rejectValue: Error }>(
   'auth/register',
   async (user, thunkAPI) => {
     try {
       return await authService.register(user);
     } catch (error) {
-      const message =
-        (error.response &&
-          error.response.data &&
-          error.response.data.message) ||
-        error.message ||
-        error.toString();
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(new Error(`failed to register ${error}`));
     }
   }
 );
 
 //Login user
-export const login = createAsyncThunk('auth/login', async (user, thunkAPI) => {
-  try {
-    return await authService.login(user);
-  } catch (error) {
-    const message =
-      (error.response && error.response.data && error.response.data.message) ||
-      error.message ||
-      error.toString();
-    return thunkAPI.rejectWithValue(message);
+export const login = createAsyncThunk<User, User, { rejectValue: Error }>(
+  'auth/login',
+  async (user, thunkAPI) => {
+    try {
+      return await authService.login(user);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(new Error(`failed to login ${error}`));
+    }
   }
-});
+);
 
 export const logout = createAsyncThunk('auth/logout', async () => {
   await authService.logout();
@@ -51,12 +64,7 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    reset: (state) => {
-      state.isError = false;
-      state.isSuccess = false;
-      state.isLoading = false;
-      state.message = '';
-    },
+    reset: (state) => (state = initialState),
   },
   extraReducers: (builder) => {
     builder
@@ -71,7 +79,7 @@ export const authSlice = createSlice({
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        state.message = action.payload;
+        state.message = action.payload!.message;
         state.user = null;
       })
       .addCase(login.pending, (state) => {
@@ -85,7 +93,7 @@ export const authSlice = createSlice({
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        state.message = action.payload;
+        state.message = action.payload!.message;
         state.user = null;
       })
       .addCase(logout.fulfilled, (state) => {

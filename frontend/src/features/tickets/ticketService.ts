@@ -1,8 +1,9 @@
 import axios from 'axios';
+import { ticketData } from './ticketSlice';
 
 const API_URL = '/api/tickets/';
 
-const createTicket = async (ticketData, token) => {
+const createTicket = async (ticketData:ticketData, token:string) => {
   const config = {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -14,7 +15,7 @@ const createTicket = async (ticketData, token) => {
 };
 
 //Get user tickets
-const getTickets = async (token) => {
+const getTickets = async (token:string) => {
   const config = {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -26,7 +27,7 @@ const getTickets = async (token) => {
 };
 
 //Get a single user ticket
-const getTicket = async (ticketId, token) => {
+const getTicket = async (ticketId:string, token:string) => {
   const config = {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -38,7 +39,7 @@ const getTicket = async (ticketId, token) => {
 };
 
 //Close a single user ticket
-const closeTicket = async (ticketId, token) => {
+const closeTicket = async (ticketId:string, token:string) => {
   const config = {
     headers: {
       Authorization: `Bearer ${token}`,

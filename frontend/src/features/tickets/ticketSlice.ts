@@ -1,9 +1,44 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { RootState } from '../../app/store';
 import ticketService from './ticketService';
 
-const initialState = {
+export interface ticketState {
+  tickets: Ticket[] | null;
+  ticket: Ticket;
+  isError: boolean;
+  isSuccess: boolean;
+  isLoading: boolean;
+  message: string | null;
+}
+
+export interface Ticket {
+  product: string;
+  createdAt: string | number | Date;
+  _id: string;
+  description: string;
+  ticketId: string;
+  isStaff: boolean;
+  user: string;
+  status: 'open' | 'closed';
+}
+
+const ticketInitialState: Ticket = {
+  product: '',
+  createdAt: '',
+  _id: '',
+  description: '',
+  ticketId: '',
+  isStaff: false,
+  user: '',
+  status: 'open',
+};
+export interface ticketData {
+  product: string;
+  description: string;
+}
+const initialState: ticketState = {
   tickets: [],
-  ticket: {},
+  ticket: ticketInitialState,
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -11,86 +46,72 @@ const initialState = {
 };
 
 //Create new ticket
-export const createTicket = createAsyncThunk(
-  'tickets/create',
-  async (ticketData, thunkAPI) => {
-    try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await ticketService.createTicket(ticketData, token);
-    } catch (error) {
-      const message =
-        (error.response &&
-          error.response.data &&
-          error.response.data.message) ||
-        error.message ||
-        error.toString();
-      return thunkAPI.rejectWithValue(message);
-    }
+export const createTicket = createAsyncThunk<
+  Ticket,
+  ticketData,
+  { state: RootState; rejectValue: Error }
+>('tickets/create', async (ticketData, thunkApi) => {
+  try {
+    const token = thunkApi.getState().auth.user?.token;
+    return await ticketService.createTicket(ticketData, token!);
+  } catch (error) {
+    return thunkApi.rejectWithValue(
+      new Error(`failed to createTicket ${error}`)
+    );
   }
-);
+});
 
 //Get user tickets
-export const getTickets = createAsyncThunk(
-  'tickets/getAll',
-  async (_, thunkAPI) => {
-    try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await ticketService.getTickets(token);
-    } catch (error) {
-      const message =
-        (error.response &&
-          error.response.data &&
-          error.response.data.message) ||
-        error.message ||
-        error.toString();
-      return thunkAPI.rejectWithValue(message);
-    }
+export const getTickets = createAsyncThunk<
+  Ticket[],
+  string,
+  { state: RootState; rejectValue: Error }
+>('tickets/getAll', async (_, thunkApi) => {
+  try {
+    const token = thunkApi.getState().auth.user?.token;
+    return await ticketService.getTickets(token!);
+  } catch (error) {
+    return thunkApi.rejectWithValue(new Error(`failed to getTickets ${error}`));
   }
-);
+});
 
 //Get Single user ticket
-export const getTicket = createAsyncThunk(
-  'tickets/get',
-  async (ticketId, thunkAPI) => {
-    try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await ticketService.getTicket(ticketId, token);
-    } catch (error) {
-      const message =
-        (error.response &&
-          error.response.data &&
-          error.response.data.message) ||
-        error.message ||
-        error.toString();
-      return thunkAPI.rejectWithValue(message);
-    }
+export const getTicket = createAsyncThunk<
+  Ticket,
+  string,
+  { state: RootState; rejectValue: Error }
+>('tickets/get', async (ticketId, thunkAPI) => {
+  try {
+    const token = thunkAPI.getState().auth.user?.token;
+    return await ticketService.getTicket(ticketId, token!);
+  } catch (error) {
+    return thunkAPI.rejectWithValue(
+      new Error(`failed to get a Ticket ${error}`)
+    );
   }
-);
+});
 
 //Close Single user ticket
-export const closeTicket = createAsyncThunk(
-  'tickets/close',
-  async (ticketId, thunkAPI) => {
-    try {
-      const token = thunkAPI.getState().auth.user.token;
-      return await ticketService.closeTicket(ticketId, token);
-    } catch (error) {
-      const message =
-        (error.response &&
-          error.response.data &&
-          error.response.data.message) ||
-        error.message ||
-        error.toString();
-      return thunkAPI.rejectWithValue(message);
-    }
+export const closeTicket = createAsyncThunk<
+  Ticket,
+  string,
+  { state: RootState; rejectValue: Error }
+>('tickets/close', async (ticketId, thunkAPI) => {
+  try {
+    const token = thunkAPI.getState().auth.user?.token;
+    return await ticketService.closeTicket(ticketId, token!);
+  } catch (error) {
+    return thunkAPI.rejectWithValue(
+      new Error(`failed to close a Ticket ${error}`)
+    );
   }
-);
+});
 
 export const ticketSlice = createSlice({
   name: 'ticket',
   initialState,
   reducers: {
-    reset: (state) => initialState,
+    reset: (state) => (state = initialState),
   },
   extraReducers: (builder) => {
     builder
@@ -101,41 +122,41 @@ export const ticketSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
       })
-      .addCase(createTicket.rejected, (state, action) => {
+      .addCase(createTicket.rejected, (state: ticketState, action) => {
         state.isLoading = false;
         state.isError = true;
-        state.message = action.payload;
+        state.message = action.payload!.message;
       })
       .addCase(getTickets.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(getTickets.fulfilled, (state, action) => {
+      .addCase(getTickets.fulfilled, (state: ticketState, action) => {
         state.isLoading = false;
         state.isSuccess = true;
         state.tickets = action.payload;
       })
-      .addCase(getTickets.rejected, (state, action) => {
+      .addCase(getTickets.rejected, (state: ticketState, action) => {
         state.isLoading = false;
         state.isError = true;
-        state.message = action.payload;
+        state.message = action.payload!.message;
       })
       .addCase(getTicket.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(getTicket.fulfilled, (state, action) => {
+      .addCase(getTicket.fulfilled, (state: ticketState, action) => {
         state.isLoading = false;
         state.isSuccess = true;
         state.ticket = action.payload;
       })
-      .addCase(getTicket.rejected, (state, action) => {
+      .addCase(getTicket.rejected, (state: ticketState, action) => {
         state.isLoading = false;
         state.isError = true;
-        state.message = action.payload;
+        state.message = action.payload!.message;
       })
-      .addCase(closeTicket.fulfilled, (state, action) => {
+      .addCase(closeTicket.fulfilled, (state: ticketState, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.tickets.map((ticket) =>
+        state.tickets?.map((ticket: Ticket) =>
           ticket._id === action.payload._id
             ? (ticket.status = 'closed')
             : ticket
